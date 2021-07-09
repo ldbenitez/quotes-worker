@@ -1,5 +1,5 @@
 name = "quotes-worker"
-type = "javascript"
+type = "webpack"
 
 account_id = "eef756191c1a2806cff763fec36f9532"
 workers_dev = true
