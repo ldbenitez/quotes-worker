@@ -1,15 +1,27 @@
 import { getQuote } from './quotes'
+import { verifyCredentials } from './auth'
 
 const PATH_LANG = {
   '/es': 'es',
   '/en': 'en',
 }
 
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
-})
+function getUnauthorizedResponse(message) {
+  return new Response(message, {
+    status: 401,
+    headers: {
+      'www-authenticate': 'Basic realm="auth"',
+    },
+  })
+}
 
 async function handleRequest(request) {
+  if (!verifyCredentials(request)) {
+    return getUnauthorizedResponse(
+      'A valid combination of User and Password has to be provied.',
+    )
+  }
+
   const { pathname } = new URL(request.url)
   const language = PATH_LANG[pathname]
 
@@ -30,3 +42,19 @@ async function handleRequest(request) {
     })
   }
 }
+
+addEventListener('fetch', event => {
+  event.respondWith(
+    handleRequest(event.request).catch(err => {
+      const message = err.reason || err.stack || 'Unknown Error'
+
+      return new Response(message, {
+        status: err.status || 500,
+        statusText: err.statusText || null,
+        headers: {
+          'content-type': 'text/plain',
+        },
+      })
+    }),
+  )
+})
